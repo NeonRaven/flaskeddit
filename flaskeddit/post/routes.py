@@ -1,4 +1,4 @@
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
 
 from flaskeddit.community import community_service
@@ -16,6 +16,20 @@ def post(name, title):
     if post:
         replies = post_service.get_post_replies(post.id, page, False)
         return render_template("post.html", tab="recent", post=post, replies=replies)
+    else:
+        abort(404)
+
+
+@post_blueprint.route("/API/community/<string:name>/post/<string:title>")
+def api_post(name, title):
+    """
+    Route for returning post data and its replies, sorted by upvotes.
+    """
+    page = int(request.args.get("page", 1))
+    post = post_service.get_post_with_votes(title, name)
+    if post:
+        replies = post_service.get_post_replies(post.id, page, True)
+        return jsonify({"post": post, "replies": replies})
     else:
         abort(404)
 
