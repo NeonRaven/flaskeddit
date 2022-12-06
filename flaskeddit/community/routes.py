@@ -1,4 +1,4 @@
-from flask import abort, flash, redirect, render_template, request, url_for
+from flask import abort, flash, redirect, render_template, request, url_for, jsonify
 from flask_login import current_user, login_required
 
 from flaskeddit.community import community_blueprint, community_service
@@ -30,6 +30,17 @@ def community(name):
         abort(404)
 
 
+@community_blueprint.route("/API/community/<string:name>")
+def api_community(name):
+    page = int(request.args.get("page", 1))
+    community = community_service.get_community(name)
+    if community:
+        posts = community_service.get_community_posts(community.id, page, False)
+        return jsonify(posts)
+    else:
+        abort(404)
+
+
 @community_blueprint.route("/community/<string:name>/top")
 def top_community(name):
     """
@@ -55,6 +66,17 @@ def top_community(name):
         abort(404)
 
 
+@community_blueprint.route("/API/community/<string:name>/top")
+def api_top_community(name):
+    page = int(request.args.get("page", 1))
+    community = community_service.get_community(name)
+    if community:
+        posts = community_service.get_community_posts(community.id, page, True)
+        return jsonify(posts)
+    else:
+        abort(404)
+
+
 @community_blueprint.route("/community/create", methods=["GET", "POST"])
 @login_required
 def create_community():
@@ -70,6 +92,18 @@ def create_community():
         flash("Successfully created community.", "primary")
         return redirect(url_for("community.community", name=form.name.data))
     return render_template("create_community.html", form=form)
+
+
+@community_blueprint.route("/API/community/create", methods=["POST"])
+@login_required
+def create_community():
+    """
+    Route for creating a community. On a GET request, it returns the community creation
+    form. On a POST request, it processes a community creation.
+    """
+    name = request.args.get("community")
+    description = request.args.get("description")
+    community_service.create_community(name, description, current_user)
 
 
 @community_blueprint.route("/community/<string:name>/update", methods=["GET", "POST"])

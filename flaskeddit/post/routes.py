@@ -20,7 +20,7 @@ def post(name, title):
         abort(404)
 
 
-@post_blueprint.route("/API/community/<string:name>/post/<string:title>")
+@post_blueprint.route("/API/community/<string:name>/post/<string:title>", methods=["GET"])
 def api_post(name, title):
     """
     Route for returning post data and its replies, sorted by upvotes.
@@ -70,9 +70,19 @@ def create_post(name):
         abort(404)
 
 
-@post_blueprint.route(
-    "/community/<string:name>/post/<string:title>/update", methods=["GET", "POST"]
-)
+@post_blueprint.route("/API/community/<string:name>/post/create", methods=["POST"])
+@login_required
+def api_create_post(name):
+    community = community_service.get_community(name)
+    if community:
+        content = request.get_json(silent=True)
+        post_service.create_post(content["title"], content["content"], community, current_user)
+        return 200
+    else:
+        abort(404)
+
+
+@post_blueprint.route("/community/<string:name>/post/<string:title>/update", methods=["GET", "POST"])
 @login_required
 def update_post(name, title):
     """
@@ -94,9 +104,7 @@ def update_post(name, title):
         abort(404)
 
 
-@post_blueprint.route(
-    "/community/<string:name>/post/<string:title>/delete", methods=["POST"]
-)
+@post_blueprint.route("/community/<string:name>/post/<string:title>/delete", methods=["POST"])
 @login_required
 def delete_post(name, title):
     """
@@ -113,9 +121,7 @@ def delete_post(name, title):
         abort(404)
 
 
-@post_blueprint.route(
-    "/community/<string:name>/post/<string:title>/upvote", methods=["POST"]
-)
+@post_blueprint.route("/community/<string:name>/post/<string:title>/upvote", methods=["POST"])
 @login_required
 def upvote_post(name, title):
     """
@@ -129,9 +135,7 @@ def upvote_post(name, title):
         abort(404)
 
 
-@post_blueprint.route(
-    "/community/<string:name>/post/<string:title>/downvote", methods=["POST"]
-)
+@post_blueprint.route("/community/<string:name>/post/<string:title>/downvote", methods=["POST"])
 @login_required
 def downvote_post(name, title):
     """
